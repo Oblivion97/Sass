@@ -1,0 +1,372 @@
+Extension: Live Sass Compiler
+    -settings -> Extension:
+        -Live sass Compiler
+            -Edit settings.json
+
+
+             "liveSassCompile.settings.formats": [
+                 //default
+                {
+                    "format": "expanded",
+                    "extensionName": ".css",
+                    "savePath": null
+                },
+                //specify path and minify the css file
+                {
+                    "format": "compressed",
+                    "extensionName": ".min.css",
+                    "savePath": "/dist/css"
+                },
+                // child css path and minify
+                {
+                    "format": "compressed",
+                    "extensionName": ".min.css",
+                    "savePath": "~/../css/"
+                }
+
+            ]
+
+Two syntax: 
+    1.SCSS - all valid css are also valid scss.
+    2.SASS - indentated syntax supports all feature of scss but only use indentation rather than curly-braces({}).
+
+Never change in css file change only in scss file.
+ 
+-----------------------------------------
+ SCSS Variable: 
+ Generally we don't use variables in css because of compativility issues of modern browsers.
+ but when we use variables in scss, they don't compile as a css variables they compile as an actual value.
+
+ // Normal css variable example.
+:root{
+    --primary-color: #272727;
+    --accent-color: #ff652f;
+    --text-color: #fff;
+}
+
+body{
+    background: var(--primary-color);
+}
+
+Compiles Css: :root{--primary-color: #272727;--accent-color: #ff652f;--text-color: #fff}body{background:var(--primary-color)}
+
+
+// SCSS variable example.
+    $primary-color: #272727;
+    $accent-color: #ff652f;
+    $text-color: #fff;
+
+body{
+    background: $primary-color;
+}
+
+Compiled CSS: body{background:#272727} 
+
+Using Sass(SCSS) variables has 100% of browser compatibility.
+
+------------------------------------------
+Maps:
+Map in scss is very similar to javascript map. we use variable and it's key use its value for many 
+elements.
+
+Let's say we have a website where all bold font has 700 font-weights, but now we want to change
+font weight to 800. this is where map and variables comes very handy.
+
+$font-weights:(
+    "regular": 400,
+    "medium": 500,
+    "bold": 700
+);
+
+body{
+    background: $primary-color;
+    color: $text-color;
+    font-weight: map-get($font-weights ,  bold);
+}
+
+Compiled CSS: body{background:#272727;color:#fff;font-weight:700}
+--------------------------------------------
+Nesting: 
+very useful but look out!
+
+its better to reuse your classes rather than nesting after nesting after nesting and so on...
+
+let's say we have a paragraph tag in a div tag(main), normally for css what wld you do to select and style that paragraph
+
+.main p {
+    
+}
+
+but in scss we do nesting...
+
+.main{
+    width: 80%;
+    margin: 0 auto;
+
+    p{
+        font-weight: map-get($font-weights, bold);
+    }
+}
+
+Compiled CSS: .main p{font-weight:700}
+exactly what would you do for css but look at the nesting easily understandable that the p tag is inside main(div).
+
+let's say we have this snipset below,
+<div class="main">
+    <p class="main_paragraph">Lorem</p>
+</div>
+in scss nesting we can use #{&}_paragraph, an inropolation which will get not just ".main_paragraph", it will get ".main .main_paragraph".
+.main{
+    width: 80%;
+    margin: 0 auto;
+
+    #{&}_paragraph{
+        font-weight: map-get($font-weights, bold);
+    }
+}
+
+Compiled CSS: .main{width:80%;margin:0 auto}.main .main_paragraph{font-weight:700}
+
+now if we want to manipulate selecte element, we can do is,
+.main{
+    width: 80%;
+    margin: 0 auto;
+
+    #{&}_paragraph{
+        font-weight: map-get($font-weights, bold);
+        &:hover{
+            color: aqua;
+        }
+    }
+}
+-----------------------------------------
+partial scss files:
+in a project we want to modulerize as much as possible. and it's no exception for css.
+what we can do for scss file is add a scss file with leading underscore(_). underscore let scss know that
+these scss files are only partial file. and it should not generate css file and ignore them.
+but when you are adding them to your main scss file it will compile and generate css in compiles css file.
+
+lets say we need to reset css styles for a html page and we want to separate our variables in another scss file. 
+all we need is create a partial scss files and import in the main scss file.
+
+_reset.scss
+*{
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+_variables.scss
+$primary-color: #272727;
+$accent-color: #ff652f;
+$text-color: #fff;
+
+main.scss
+@import './resets';
+@import './variables';
+
+in this way we can manage large project and work together as a team with partial files of scss work on them individaully.
+--------------------------------------------
+Function:
+scss functions are pretty much basic as like javascript.
+
+we want to select font weigh by the key name of a map.for example we will use our previously used map.
+//_variables.scss
+$font-weights:(
+    "regular": 400,
+    "medium": 500,
+    "bold": 700
+);
+
+
+//main.scss
+@function weight($weight-name){
+    @return map-get($font-weights , $weight-name );
+}
+body{
+    background: $primary-color;
+    color: $text-color;
+    font-weight: weight(bold);//used our created function
+}
+-----------------------------------------
+Mixins:
+
+lets say we have many paragraph in a div and many div in this page and use flex box to show them like a grid.
+or imagine you'll have to use some lines of css for some classes.
+what we do in normal css,
+
+<div class="main">
+    <p class="main_paragraph">Lorem ipsum dolor sit, amet consectetur adipisicing elit. Doloribus quibusdam sunt eos. Quam sunt
+        sapiente iure! Temporibus saepe quis omnis mollitia nulla doloribus possimus eaque vitae, earum ducimus
+        ullam accusamus!</p>
+    <p class="main_paragraph">Lorem ipsum dolor sit, amet consectetur adipisicing elit. Doloribus quibusdam sunt eos. Quam sunt
+        sapiente iure! Temporibus saepe quis omnis mollitia nulla doloribus possimus eaque vitae, earum ducimus
+        ullam accusamus!</p>
+</div>
+
+.main{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+now if you want to place pragraphs in a flexbox you'll have write this same lines multiple times. thats where MIXINS comes very handy.
+
+//main.scss
+@mixin flexCenter {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.main{
+    @include flexCenter;//used those lines by mixins.
+    width: 80%;
+    margin: 0 auto;
+}
+
+you also can pass parameter through mixins which act a function and make dynamic styling by scss mixins,
+
+//main.scss
+@mixin flexCenter($direction) {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: $direction;
+}
+.main{
+    @include flexCenter(coumn);//used those lines by mixins.
+    width: 80%;
+    margin: 0 auto;
+}
+
+don't mix up mixins with functions, functions supposed to return a computed value but mixins on define styles.
+
+a good and popular example would be using light and dark theme for a web page.
+
+
+lets say our basic theme was dark and set it to dark theme.
+
+//main.html
+<body class="light">
+        <div class="main">
+            <p class="main_paragraph">Lorem ipsum dolor sit, amet consectetur adipisicing elit. Doloribus quibusdam sunt
+                eos. Quam sunt
+                sapiente iure! Temporibus saepe quis omnis mollitia nulla doloribus possimus eaque vitae, earum ducimus
+                ullam accusamus!</p>
+            <p class="main_paragraph">Lorem ipsum dolor sit, amet consectetur adipisicing elit. Doloribus quibusdam sunt
+                eos. Quam sunt
+                sapiente iure! Temporibus saepe quis omnis mollitia nulla doloribus possimus eaque vitae, earum ducimus
+                ullam accusamus!</p>
+        </div>
+</body>
+
+//main.scss
+body{
+    background: $primary-color;
+    color: $text-color;
+    font-weight: weight(bold);
+}
+
+//_variables.scss
+$primary-color: #272727;
+$accent-color: #ff652f;
+$text-color: #fff;
+
+now if we add mixin function to change theme, and call it,
+
+@mixin theme($light-theme: true) {
+    @if $light-theme {
+        background-color: lighten($primary-color, 100%);
+        color: darken($text-color, 100%);
+    }
+}
+
+.light{
+    @include theme($light-theme: true);// theme would be lighter when this parameter in the method is true.
+}
+
+
+another good mixin example would be with media query,
+lets say we have two pragraphs which are in row but in a certian screen width we want it in row,
+
+//_variable.scss
+$mobile : 800px;
+
+//main.scss
+@mixin mobile {
+    @media (max-width: $mobile) {
+        @content;
+    }
+}
+
+.main{
+    @include flexCenter(row);
+    width: 80%;
+    margin: 0 auto;
+
+    #{&}_paragraph{
+        font-weight: weight(bold);
+        
+        &:hover{
+            color: aqua;
+        }
+    }
+
+    @include mobile{
+        flex-direction: column;
+    }
+    
+}
+Here we set a parameter in mixin and checking media if its 800 pixels. if its 800 or below 
+the paragraphs will be set in column.
+-----------------------------------------
+Extend:
+lets say we have two paragraphs and we want to extend all the styles of paragraph1 to paragraph2 and 
+want to some more style in paragraph2.
+
+//main.html
+<div class="main">
+            <p class="main_paragraph1">Lorem ipsum dolor sit, amet consectetur adipisicing elit. Doloribus quibusdam
+                sunt
+                eos. Quam sunt
+                sapiente iure! Temporibus saepe quis omnis mollitia nulla doloribus possimus eaque vitae, earum ducimus
+                ullam accusamus!</p>
+            <p class="main_paragraph2">Lorem ipsum dolor sit, amet consectetur adipisicing elit. Doloribus quibusdam
+                sunt
+                eos. Quam sunt
+                sapiente iure! Temporibus saepe quis omnis mollitia nulla doloribus possimus eaque vitae, earum ducimus
+                ullam accusamus!</p>
+</div>
+
+//main.scss
+
+.main{
+    #{&}_paragraph1{//paragraph 1 style
+        font-weight: weight(bold);
+        
+        &:hover{
+            color: aqua;
+        }
+    }
+}
+
+.main_paragraph2{
+    @extend .main_paragraph1; //extending paragraph 1 and adding some more style
+    font-style: italic;
+}
+------------------------------------------
+operation(Mathematical)
+in normal css we use calc. for example,
+.main{
+    @include flexCenter(row);
+    width: calc(80% - 40%);
+    margin: 0 auto;
+}
+but in scss we can just do this,
+.main{
+    @include flexCenter(row);
+    width: 80%-40%;
+    margin: 0 auto;
+}
+one thing need be reminded that you can't mix types of operation.
+for example, 
+in css : width: calc(80% - 40px); will just do fine but in scss it won't work. it has to be the same type. like,
+width: calc(80% - 40%);
